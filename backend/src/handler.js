@@ -3,7 +3,11 @@ import { getNotes, addNote, updateNote, deleteNote } from "./routes/notes.js";
 
 export async function main(event) {
   const method = event.requestContext.http.method;
-  const path = event.rawPath;
+  const stage = event.requestContext.stage;
+  const rawPath = event.rawPath?.startsWith(`/${stage}`)
+    ? event.rawPath.slice(stage.length + 1)
+    : event.rawPath;
+  const path = rawPath || "/";
 
   if (method === "OPTIONS") {
     return json(200, { ok: true });

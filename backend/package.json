@@ -3,5 +3,8 @@
   "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0"
+  },
+  "devDependencies": {
+    "serverless-offline": "^14.4.0"
   }
 }
