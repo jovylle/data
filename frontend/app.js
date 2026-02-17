@@ -1,4 +1,5 @@
-const API_URL = "PASTE_YOUR_API_URL_HERE";
+const API_URL =
+  "https://yvo2a8ln14.execute-api.ap-southeast-1.amazonaws.com/{proxy+}";
 
 async function loadNotes() {
   const res = await fetch(`${API_URL}/notes`);
