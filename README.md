@@ -71,14 +71,14 @@ Paste the Access Key ID, Secret Access Key, region (`ap-southeast-1`), and optio
 Alternatively run:
 
 ```sh
-serverless config credentials --provider aws --key YOUR_KEY_ID --secret YOUR_SECRET --stage dev --region ap-southeast-1
+serverless config credentials --provider aws --key YOUR_KEY_ID --secret YOUR_SECRET --stage prod --region ap-southeast-1
 ```
 
 Set `AWS_PROFILE=deploy` (or similar) before deployments if you use a named profile.
 
 ### 3. Frontend & Production
 
-1. Update `frontend/app.js` so `API_BASE` points to the endpoint reported by Serverless (e.g., `https://yvo2a8ln14.execute-api.ap-southeast-1.amazonaws.com`) and `API_STAGE` matches the stage (`dev`). The helper variables combine to hit `/dev/notes`.
+1. Update `frontend/app.js` so `API_BASE` points to the endpoint reported by Serverless (e.g., `https://yvo2a8ln14.execute-api.ap-southeast-1.amazonaws.com`) and `API_STAGE` matches the stage (`prod`). The helper variables combine to hit `/prod/notes`.
 2. Deploy the static UI:
    - **Netlify** — [Create a new site](https://app.netlify.com) (drop `frontend/` or connect your repo).  
    - **GitHub Pages** — push `frontend/` to a branch and enable GitHub Pages in Settings.  

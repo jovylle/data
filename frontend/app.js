@@ -1,6 +1,12 @@
-const API_STAGE = "dev";
-const API_BASE = "https://pmji7qzap2.execute-api.ap-southeast-1.amazonaws.com";
-const API_URL = `${API_BASE}/${API_STAGE}`;
+const API_URLS = {
+  dev: "https://pmji7qzap2.execute-api.ap-southeast-1.amazonaws.com/dev",
+  prod: "https://ltocvknz09.execute-api.ap-southeast-1.amazonaws.com/prod"
+};
+
+const API_STAGE = window.location.hostname.includes("localhost")
+  ? "dev"
+  : "prod";
+const API_URL = API_URLS[API_STAGE];
 
 async function loadNotes() {
   const res = await fetch(`${API_URL}/notes`);
