@@ -1,4 +1,5 @@
 service: my-data-hub-api
+useDotenv: true
 
 frameworkVersion: "3"
 
