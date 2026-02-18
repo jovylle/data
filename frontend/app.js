@@ -1,5 +1,5 @@
 const API_STAGE = "dev";
-const API_BASE = "https://yvo2a8ln14.execute-api.ap-southeast-1.amazonaws.com";
+const API_BASE = "https://pmji7qzap2.execute-api.ap-southeast-1.amazonaws.com";
 const API_URL = `${API_BASE}/${API_STAGE}`;
 
 async function loadNotes() {
