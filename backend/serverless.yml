@@ -1,4 +1,4 @@
-service: supabase-aws-template
+service: my-data-hub-api
 
 frameworkVersion: "3"
 

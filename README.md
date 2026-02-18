@@ -1,36 +1,30 @@
-# Supabase + AWS Lambda Template
+# My Data Hub
 
-Simple starter template for:
+Data and API provider for:
 - Supabase Database
 - AWS Lambda (Serverless Framework)
-- Static HTML frontend
+- Content APIs for blogs, projects, highlights, profile, notifications, and logs
 
-## Start a new project from this template
+## Project setup
 
-When you want to spin up a new project from this template:
+To run this project:
 
 1. Create a new empty GitHub repository (no README, no license, no gitignore).
-2. `git clone https://github.com/jovylle/supabase-aws-serverless-template my-new-project && cd my-new-project`
-3. Point this clone to your new repository:
-   ```sh
-   git remote rename origin template-origin
-   git remote add origin https://github.com/<you>/<my-new-project>.git
-   git push -u origin master
-   ```
-   If your default branch is `main`, push `main` instead of `master`.
-4. Copy the backend example env file and edit values (`cp backend/.env.example backend/.env`).
-5. Install backend deps (`cd backend && npm install`) so the schema helper script can run.
-6. Run `npm run schema:apply` and `npm run schema:seed` (with `SUPABASE_DATABASE_URL` in `.env`) to provision the `notes` and `projects` tables plus sample data.
-7. Deploy the Lambda (`serverless deploy`) and update `frontend/app.js` with the published API endpoint before hosting the static app.
+1. Copy the backend env file and edit values (`cp backend/.env.example backend/.env`).
+2. Install backend deps (`cd backend && npm install`) so schema/import scripts can run.
+3. Run `npm run schema:apply` (with `SUPABASE_DATABASE_URL` in `.env`) to provision tables.
+4. (Optional) run `npm run schema:seed` for sample records.
+5. (Optional JSON migration) place your JSON export under `old_jsons/data` and run `npm run import:json` from `backend/` to load documents, blogs, notifications, projects, highlights, and function logs into Postgres tables.
+6. Deploy the Lambda (`serverless deploy`) and update `frontend/app.js` with the published API endpoint before hosting the static app.
 
-This keeps the setup steps reproducible for every clone without copying the SQL from the README or recreating scripts manually.
+This keeps setup reproducible and makes this repo the single source of truth for your API-backed content.
 
 ## Setup reference
 
 ### 1. Supabase setup
 
 1. Sign in at [https://app.supabase.com](https://app.supabase.com), create a new project, and choose an AWS region near your users.
-2. Apply the schema defined by `backend/sql/schema.sql` (the file contains both `notes` and `projects`). Paste the contents into the SQL Editor or, after setting `SUPABASE_DATABASE_URL` in `.env`, run `npm run schema:apply` from `backend/` so the template automatically creates the tables and indexes that back this API.
+2. Apply the schema defined by `backend/sql/schema.sql` (the file contains both `notes` and `projects`). Paste the contents into the SQL Editor or, after setting `SUPABASE_DATABASE_URL` in `.env`, run `npm run schema:apply` from `backend/` so the project automatically creates the tables and indexes that back this API.
 3. In **Project Settings → API** copy the `API URL`.
 4. Switch to **Project Settings → API Keys**, find the **“New API keys”** section, and copy the `sb_secret_…` value.
 5. Copy `backend/.env.example` to `.env` and fill in:
@@ -47,6 +41,7 @@ Everything needed to recreate the schema is stored under `backend/sql/`. Use the
 
 - `npm run schema:apply` – loads `backend/sql/schema.sql` and creates the `notes` and `projects` tables plus their indexes. Make sure `SUPABASE_DATABASE_URL` (the direct Postgres connection string from the Supabase dashboard) is set in `.env` before running the command.
 - `npm run schema:seed` – runs `backend/sql/seeds.sql`, which truncates both tables and inserts example notes/projects, so you can verify everything is wired up. Re-running the seed file is safe in dev environments.
+- `npm run import:json` – loads `../old_jsons/data` (relative to `backend/`) into normalized tables (`content_documents`, `portfolio_projects`, `blog_posts`, `highlights`, `notification_items`, `function_logs`). The importer truncates those target tables first so the database mirrors the JSON source exactly.
 
 Run `npm install` from `backend/` first so the dev dependency `pg` (used by the helper script) is available. The schema and seed files live inside this repository so every new clone can apply the same structure before deploying the Lambda.
 
@@ -61,7 +56,7 @@ cp .env.example .env
 serverless deploy
 ```
 
-This template uses Serverless Framework v3 with `serverless-offline` v12 (compatible pair). If you bump one, bump the other to a compatible major version.
+This project uses Serverless Framework v3 with `serverless-offline` v12 (compatible pair). If you bump one, bump the other to a compatible major version.
 
 Copy the API URL from the deploy output and paste it into `frontend/app.js`.
 

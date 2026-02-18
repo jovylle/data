@@ -13,3 +13,4 @@ pids
 /backend/.serverless/
 /backend/.webpack/
 .DS_Store
+old_jsons/
