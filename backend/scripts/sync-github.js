@@ -92,19 +92,6 @@ async function main() {
   try {
     await client.query("begin");
 
-    const updateByKey = `
-      update portfolio_projects set
-        github_id = $2,
-        slug = $3,
-        title = $4,
-        description = $5,
-        repo_url = $6,
-        status = $7,
-        visibility_private = $8,
-        tech = $9::text[],
-        raw = $10::jsonb
-      where project_key = $1
-    `;
     const insertNew = `
       insert into portfolio_projects (
         project_key, source, github_id, slug, title, description, repo_url,
@@ -113,52 +100,41 @@ async function main() {
     `;
 
     let inserted = 0;
-    let updated = 0;
+    let skipped = 0;
 
     for (const repo of repos) {
-      const projectKey = `github:${repo.id}`;
-      const tech = Array.isArray(repo.topics) ? repo.topics : [];
-
       const existing = await client.query(
-        "select project_key from portfolio_projects where github_id = $1",
+        "select 1 from portfolio_projects where github_id = $1",
         [repo.id]
       );
 
       if (existing.rowCount > 0) {
-        const key = existing.rows[0].project_key;
-        await client.query(updateByKey, [
-          key,
-          repo.id,
-          repo.name ?? null,
-          repo.name ?? "Untitled",
-          repo.description ?? null,
-          repo.html_url ?? null,
-          "published",
-          Boolean(repo.private),
-          tech,
-          JSON.stringify(repo),
-        ]);
-        updated += 1;
-      } else {
-        await client.query(insertNew, [
-          projectKey,
-          "github",
-          repo.id,
-          repo.name ?? null,
-          repo.name ?? "Untitled",
-          repo.description ?? null,
-          repo.html_url ?? null,
-          "published",
-          Boolean(repo.private),
-          tech,
-          JSON.stringify(repo),
-        ]);
-        inserted += 1;
+        skipped += 1;
+        continue;
       }
+
+      const projectKey = `github:${repo.id}`;
+      const tech = Array.isArray(repo.topics) ? repo.topics : [];
+      const title = repo.name ?? "Untitled";
+
+      await client.query(insertNew, [
+        projectKey,
+        "github",
+        repo.id,
+        repo.name ?? null,
+        title,
+        repo.description ?? null,
+        repo.html_url ?? null,
+        "published",
+        Boolean(repo.private),
+        tech,
+        JSON.stringify(repo),
+      ]);
+      inserted += 1;
     }
 
     await client.query("commit");
-    console.log(`Synced ${repos.length} repo(s): ${inserted} new, ${updated} updated (matched by github_id).`);
+    console.log(`Synced ${repos.length} repo(s): ${inserted} new, ${skipped} already in DB (unchanged).`);
   } catch (error) {
     await client.query("rollback");
     console.error(error);
