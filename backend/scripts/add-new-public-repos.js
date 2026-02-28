@@ -1,3 +1,8 @@
+/**
+ * Add non-existing public GitHub repos to portfolio_projects.
+ * Fetches user's public repos and inserts only those not already in DB (by github_id).
+ * Used by GitHub Action (sync:github). No updates to existing rows.
+ */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Client } from "pg";
@@ -28,7 +33,7 @@ function loadDotEnv(raw) {
 async function fetchPublicRepos(username, token) {
   const headers = {
     Accept: "application/vnd.github.v3+json",
-    "User-Agent": "portfolio-sync",
+    "User-Agent": "portfolio-add-new-repos",
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -75,7 +80,7 @@ async function main() {
   const username = usernameArg ?? process.env.GITHUB_USERNAME;
   if (!username) {
     console.error(
-      "Usage: node scripts/sync-github.js <github-username>\nOr set GITHUB_USERNAME in .env"
+      "Usage: node scripts/add-new-public-repos.js <github-username>\nOr set GITHUB_USERNAME in .env"
     );
     process.exit(1);
   }
@@ -94,9 +99,9 @@ async function main() {
 
     const insertNew = `
       insert into portfolio_projects (
-        project_key, source, github_id, slug, title, description, repo_url,
-        status, visibility_private, tech, raw
-      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::text[], $11::jsonb)
+        project_key, github_id, slug, title, description, repo_url,
+        is_published, tech, github_raw
+      ) values ($1, $2, $3, $4, $5, $6, $7, $8::text[], $9::jsonb)
     `;
 
     let inserted = 0;
@@ -117,24 +122,30 @@ async function main() {
       const tech = Array.isArray(repo.topics) ? repo.topics : [];
       const title = repo.name ?? "Untitled";
 
+      const githubRaw = {
+        fork: repo.fork ?? null,
+        id: repo.id ?? null,
+        html_url: repo.html_url ?? null,
+        created_at: repo.created_at ?? null,
+        updated_at: repo.updated_at ?? null,
+        pushed_at: repo.pushed_at ?? null,
+      };
       await client.query(insertNew, [
         projectKey,
-        "github",
         repo.id,
         repo.name ?? null,
         title,
         repo.description ?? null,
         repo.html_url ?? null,
-        "published",
-        Boolean(repo.private),
+        !repo.private,
         tech,
-        JSON.stringify(repo),
+        JSON.stringify(githubRaw),
       ]);
       inserted += 1;
     }
 
     await client.query("commit");
-    console.log(`Synced ${repos.length} repo(s): ${inserted} new, ${skipped} already in DB (unchanged).`);
+    console.log(`Done: ${inserted} new, ${skipped} already in DB.`);
   } catch (error) {
     await client.query("rollback");
     console.error(error);

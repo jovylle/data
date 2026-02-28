@@ -30,5 +30,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Sync public repos to Supabase
+      - name: Add new public repos to Supabase
         run: npm run sync:github

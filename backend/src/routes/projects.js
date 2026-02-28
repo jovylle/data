@@ -11,15 +11,14 @@ export async function getProjects(event) {
   let request = supabase
     .from("portfolio_projects")
     .select(
-      "project_key, source, external_id, slug, title, description, body, thumbnail, status, visibility_private, updated_at, priority_score, tech, repo_url, github_id, links"
+      "project_key, slug, title, description, body, thumbnail, is_published, updated_at, priority_score, tech, repo_url, github_raw, github_id, links"
     )
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (query.source) request = request.eq("source", query.source);
-  if (query.status) request = request.eq("status", query.status);
-  if (!includeDrafts) request = request.not("status", "eq", "draft");
+  if (query.is_published !== undefined) request = request.eq("is_published", toBoolean(query.is_published, true));
+  if (!includeDrafts) request = request.eq("is_published", true);
   if (query.slug) request = request.eq("slug", query.slug);
 
   const { data, error } = await request;
@@ -33,7 +32,7 @@ export async function getProjectByKey(key) {
   const byKey = await supabase
     .from("portfolio_projects")
     .select(
-      "project_key, source, external_id, slug, title, description, body, thumbnail, status, visibility_private, updated_at, priority_score, tech, repo_url, github_id, links, raw"
+      "project_key, slug, title, description, body, thumbnail, is_published, updated_at, priority_score, tech, repo_url, github_raw, github_id, links"
     )
     .eq("project_key", key)
     .maybeSingle();
@@ -44,7 +43,7 @@ export async function getProjectByKey(key) {
   const bySlug = await supabase
     .from("portfolio_projects")
     .select(
-      "project_key, source, external_id, slug, title, description, body, thumbnail, status, visibility_private, updated_at, priority_score, tech, repo_url, github_id, links, raw"
+      "project_key, slug, title, description, body, thumbnail, is_published, updated_at, priority_score, tech, repo_url, github_raw, github_id, links"
     )
     .eq("slug", key)
     .maybeSingle();

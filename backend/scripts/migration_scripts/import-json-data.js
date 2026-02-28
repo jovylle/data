@@ -141,7 +141,6 @@ async function main() {
       const keyBase = row.id ?? row.slug ?? slugify(row.title || `legacy-${idx}`);
       projectRows.push({
         projectKey: `legacy:${keyBase}`,
-        source: "legacy-projects",
         externalId: toInteger(row.id),
         slug: row.slug ?? null,
         title: row.title ?? `Legacy Project ${idx + 1}`,
@@ -164,7 +163,6 @@ async function main() {
       const keyBase = row.slug ?? row.id ?? slugify(row.title || `personal-${idx}`);
       projectRows.push({
         projectKey: `personal:${keyBase}`,
-        source: "personal-projects",
         externalId: toInteger(row.id),
         slug: row.slug ?? null,
         title: row.title ?? `Personal Project ${idx + 1}`,
@@ -186,30 +184,26 @@ async function main() {
     for (const row of projectRows) {
       await client.query(
         `insert into portfolio_projects (
-           project_key, source, external_id, slug, title, description, body, thumbnail, status,
-           visibility_private, updated_at, priority_score, tech, repo_url, github_id, links, raw
+           project_key, slug, title, description, body, thumbnail,
+           is_published, updated_at, priority_score, tech, repo_url, github_id, links
          ) values (
-           $1, $2, $3, $4, $5, $6, $7, $8, $9,
-           $10, $11, $12, $13::text[], $14, $15, $16::jsonb, $17::jsonb
+           $1, $2, $3, $4, $5, $6, $7,
+           $8, $9, $10::text[], $11, $12, $13::jsonb
          )`,
         [
           row.projectKey,
-          row.source,
-          row.externalId,
           row.slug,
           row.title,
           row.description,
           row.body,
           row.thumbnail,
-          row.status,
-          row.visibilityPrivate,
+          !row.visibilityPrivate,
           row.updatedAt,
           row.priorityScore,
           row.tech,
           row.repoUrl,
           row.githubId,
-          JSON.stringify(row.links),
-          JSON.stringify(row.raw)
+          JSON.stringify(row.links)
         ]
       );
     }

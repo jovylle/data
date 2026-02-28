@@ -52,14 +52,25 @@ const sql = await readFile(filePath, "utf-8");
 const client = new Client({ connectionString });
 let error;
 
+// Run each statement separately so DDL runs in order and errors point to the right statement
+const statements = sql
+  .split(";")
+  .map((s) => s.trim())
+  .filter((s) => s.length > 0);
+
 try {
   await client.connect();
   await client.query("begin");
-  await client.query(sql);
+  for (const statement of statements) {
+    await client.query(statement + ";");
+  }
   await client.query("commit");
   console.log(`Applied ${relativePath}`);
 } catch (err) {
   error = err;
+  try {
+    await client.query("rollback");
+  } catch (_) {}
 } finally {
   try {
     await client.end();

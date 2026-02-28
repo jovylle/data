@@ -4,8 +4,7 @@
   "scripts": {
     "schema:apply": "node ./scripts/run-sql.js ./sql/schema.sql",
     "schema:seed": "node ./scripts/run-sql.js ./sql/seeds.sql",
-    "import:json": "node ./scripts/import-json-data.js ../old_jsons/data",
-    "sync:github": "node ./scripts/sync-github.js"
+    "sync:github": "node ./scripts/add-new-public-repos.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
