@@ -92,7 +92,23 @@ async function main() {
   console.log(`Found ${repos.length} public repo(s).`);
 
   const client = new Client({ connectionString });
-  await client.connect();
+  try {
+    await client.connect();
+  } catch (connectError) {
+    const msg = connectError?.message ?? String(connectError);
+    if (
+      msg.includes("Tenant or user not found") ||
+      connectError?.code === "XX000"
+    ) {
+      console.error(
+        "Database connection rejected (tenant/user not found). In CI, ensure:\n" +
+          "  1. GitHub repo secret SUPABASE_DATABASE_URL is set.\n" +
+          "  2. The value matches Supabase Dashboard → Project Settings → Database → Connection string (URI).\n" +
+          "  3. The Supabase project is not paused (free tier pauses after ~7 days inactivity)."
+      );
+    }
+    throw connectError;
+  }
 
   try {
     await client.query("begin");
