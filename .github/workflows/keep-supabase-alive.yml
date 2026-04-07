@@ -1,24 +1,43 @@
 # Prevents Supabase free-tier project from pausing after ~7 days of inactivity.
-# Runs every 3 days; optional: add SUPABASE_ANON_KEY repo secret if ping returns 401.
+# A real GET against a table runs a SQL query in Postgres — no INSERT/UPDATE needed.
+# Runs every 3 days. GitHub secrets: SUPABASE_SECRET_KEY (typical) or SUPABASE_ANON_KEY (optional alt).
 name: Keep Supabase Alive
 
 on:
   schedule:
-    - cron: "0 0 */3 * *"  # Every 3 days at midnight UTC
+    - cron: "0 0 */3 * *" # Every 3 days at midnight UTC
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase
+      - name: Ping Supabase (REST read)
         env:
-          SUPABASE_URL: https://lnzlbxgocbyleqazkepk.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "$SUPABASE_ANON_KEY" ]; then
-            code=$(curl -s -o /dev/null -w "%{http_code}" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" "$SUPABASE_URL/rest/v1/?select=1")
-          else
-            code=$(curl -s -o /dev/null -w "%{http_code}" "$SUPABASE_URL/rest/v1/?select=1")
+          set -euo pipefail
+          DEFAULT_URL="https://lnzlbxgocbyleqazkepk.supabase.co"
+          BASE_URL="${SUPABASE_URL:-$DEFAULT_URL}"
+          BASE_URL="${BASE_URL%/}"
+
+          KEY="${SUPABASE_SECRET_KEY:-${SUPABASE_ANON_KEY:-}}"
+          if [ -z "$KEY" ]; then
+            echo "::error::Set GitHub secret SUPABASE_SECRET_KEY or SUPABASE_ANON_KEY."
+            exit 1
           fi
-          echo "Supabase ping completed (HTTP $code)"
+
+          # Real resource path; empty table still returns 200 with [].
+          path="/rest/v1/portfolio_projects?select=project_key&limit=1"
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            "${BASE_URL}${path}")
+
+          echo "Supabase ping: GET ${path} → HTTP ${code}"
+          if [ "$code" != "200" ]; then
+            echo "::error::Expected HTTP 200; got ${code}. Check key, RLS, and table name."
+            exit 1
+          fi
