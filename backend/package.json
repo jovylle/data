@@ -4,7 +4,14 @@
   "scripts": {
     "schema:apply": "node ./scripts/run-sql.js ./sql/schema.sql",
     "schema:seed": "node ./scripts/run-sql.js ./sql/seeds.sql",
-    "sync:github": "node ./scripts/add-new-public-repos.js"
+    "sync:github": "node ./scripts/add-new-public-repos.js",
+    "supabase:start": "./bin/supabase start",
+    "supabase:stop": "./bin/supabase stop",
+    "supabase:status": "./bin/supabase status",
+    "supabase:db:push": "./bin/supabase db push",
+    "supabase:db:reset": "./bin/supabase db reset",
+    "supabase:migration:new": "./bin/supabase migration new",
+    "supabase:db:query": "./bin/supabase db query"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
