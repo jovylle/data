@@ -11,7 +11,8 @@
     "supabase:db:push": "./bin/supabase db push",
     "supabase:db:reset": "./bin/supabase db reset",
     "supabase:migration:new": "./bin/supabase migration new",
-    "supabase:db:query": "./bin/supabase db query"
+    "supabase:db:query": "./bin/supabase db query",
+    "backup:db": "node ./scripts/backup-db.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",

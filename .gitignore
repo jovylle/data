@@ -17,3 +17,6 @@ old_jsons/
 
 # Local Supabase bundle / dumps (large; not source)
 supabase.tar.gz
+
+# Local DB backups (run: cd backend && npm run backup:db)
+/backend/backups/
