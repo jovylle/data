@@ -1,94 +1,172 @@
-# My Data Hub
+# Data Hub
 
-Data and API provider for:
-- Supabase Database
-- AWS Lambda (Serverless Framework)
-- Content APIs for blogs, projects, highlights, profile, notifications, and logs
+A project for managing personal data using Supabase.
 
-## Project setup
+## Setup
 
-To run this project:
+1. Install Supabase CLI (already downloaded to backend/bin/supabase)
 
-1. Create a new empty GitHub repository (no README, no license, no gitignore).
-1. Copy the backend env file and edit values (`cp backend/.env.example backend/.env`).
-2. Install backend deps (`cd backend && npm install`) so schema/import scripts can run.
-3. Run `npm run schema:apply` (with `SUPABASE_DATABASE_URL` in `.env`) to provision tables.
-4. (Optional) run `npm run schema:seed` for sample records.
-5. (Optional JSON migration) place your JSON export under `old_jsons/data` and run `npm run import:json` from `backend/` to load documents, blogs, notifications, projects, highlights, and function logs into Postgres tables.
-6. Deploy the Lambda (`serverless deploy`) and update `frontend/app.js` with the published API endpoint before hosting the static app.
-
-This keeps setup reproducible and makes this repo the single source of truth for your API-backed content.
-
-## Setup reference
-
-### 1. Supabase setup
-
-1. Sign in at [https://app.supabase.com](https://app.supabase.com), create a new project, and choose an AWS region near your users.
-2. Apply the schema defined by `backend/sql/schema.sql` (the file contains both `notes` and `projects`). Paste the contents into the SQL Editor or, after setting `SUPABASE_DATABASE_URL` in `.env`, run `npm run schema:apply` from `backend/` so the project automatically creates the tables and indexes that back this API.
-3. In **Project Settings → API** copy the `API URL`.
-4. Switch to **Project Settings → API Keys**, find the **“New API keys”** section, and copy the `sb_secret_…` value.
-5. Copy `backend/.env.example` to `.env` and fill in:
-   ```env
-   SUPABASE_URL=https://xxxxxx.supabase.co
-   SUPABASE_SECRET_KEY=your_sb_secret_key
-   SUPABASE_DATABASE_URL=postgresql://postgres:postgres@db-host.supabase.co:5432/postgres
+2. Login to Supabase:
+   ```bash
+   cd backend
+   ./bin/supabase login
    ```
-    Make sure `SUPABASE_DATABASE_URL` matches the Postgres connection string (Settings → Database → Connection string) so the schema helper script can connect. If the frontend ever needs direct Supabase access, enable Row Level Security and policies plus use `sb_publishable_…` on the client. Otherwise keep Supabase credentials behind Lambda.
 
-### Schema & seeds
+3. Link to your project:
+   ```bash
+   ./bin/supabase link --project-ref lnzlbxgocbyleqazkepk
+   ```
 
-Everything needed to recreate the schema is stored under `backend/sql/`. Use the included Node helper at `backend/scripts/run-sql.js` (it leverages the `pg` driver) so clones can bootstrap a fresh database without manually replaying SQL.
+4. Push the schema:
+   ```bash
+   npm run supabase:db:push
+   ```
 
-- `npm run schema:apply` – loads `backend/sql/schema.sql` and creates the `notes` and `projects` tables plus their indexes. Make sure `SUPABASE_DATABASE_URL` (the direct Postgres connection string from the Supabase dashboard) is set in `.env` before running the command.
-- `npm run schema:seed` – runs `backend/sql/seeds.sql`, which truncates both tables and inserts example notes/projects, so you can verify everything is wired up. Re-running the seed file is safe in dev environments.
-- `npm run import:json` – loads `../old_jsons/data` (relative to `backend/`) into normalized tables (`content_documents`, `portfolio_projects`, `blog_posts`, `highlights`, `notification_items`, `function_logs`). The importer truncates those target tables first so the database mirrors the JSON source exactly.
+5. Reset and seed the database:
+   ```bash
+   npm run supabase:db:reset
+   ```
 
-Run `npm install` from `backend/` first so the dev dependency `pg` (used by the helper script) is available. The schema and seed files live inside this repository so every new clone can apply the same structure before deploying the Lambda.
+## Development
 
-### 2. Backend deploy
+- To create a new migration: `npm run supabase:migration:new <name>`
+- To push changes: `npm run supabase:db:push`
+- To query data: `npm run supabase:db:query "<sql>"`
 
-```sh
-cd backend
-npm install
-npm install -g serverless # or rely on `npx serverless`
-cp .env.example .env
-# edit .env with SUPABASE_URL and SUPABASE_SECRET_KEY from step 1 (or `source .env`)
-serverless deploy
+For local development (requires Docker):
+- Start local Supabase: `npm run supabase:start`
+- Stop: `npm run supabase:stop`
+
+## Scripts
+
+- `npm run schema:apply`: Apply schema using old method
+- `npm run schema:seed`: Seed using old method
+- `npm run sync:github`: Sync GitHub repos
+  
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Windows</b></summary>
+
+  Available via [Scoop](https://scoop.sh). To install:
+
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
+
+  To upgrade:
+
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
 ```
 
-This project uses Serverless Framework v3 with `serverless-offline` v12 (compatible pair). If you bump one, bump the other to a compatible major version.
+Or using npx:
 
-Copy the API URL from the deploy output and paste it into `frontend/app.js`.
-
-#### AWS credentials
-Serverless requires AWS IAM creds. Run:
-
-```sh
-aws configure
+```bash
+npx supabase bootstrap
 ```
 
-Paste the Access Key ID, Secret Access Key, region (`ap-southeast-1`), and optional output format (`json`).  
-Alternatively run:
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
 
 ```sh
-serverless config credentials --provider aws --key YOUR_KEY_ID --secret YOUR_SECRET --stage prod --region ap-southeast-1
+# Go >= 1.22
+go run . help
 ```
-
-Set `AWS_PROFILE=deploy` (or similar) before deployments if you use a named profile.
-
-### 3. Frontend & Production
-
-1. Update `frontend/app.js` so `API_BASE` points to the endpoint reported by Serverless (e.g., `https://yvo2a8ln14.execute-api.ap-southeast-1.amazonaws.com`) and `API_STAGE` matches the stage (`prod`). The helper variables combine to hit `/prod/notes`.
-2. Deploy the static UI:
-   - **Netlify** — [Create a new site](https://app.netlify.com) (drop `frontend/` or connect your repo).  
-   - **GitHub Pages** — push `frontend/` to a branch and enable GitHub Pages in Settings.  
-   - **S3 + CloudFront** — upload `frontend/` to a static-hosting bucket and optionally add CloudFront for caching.
-3. Optional: enable Supabase Auth + RLS policies before exposing the UI publicly.
-
-### Production checklist
-
-- Keep `backend/.env` out of Git (`.gitignore` already ignores `.env`/`.env.*`).  
-- Rotate Supabase secrets regularly and never expose them in the browser.  
-- Monitor costs with [AWS Budgets](https://console.aws.amazon.com/billing/home#/budgets) and set alerts before hitting free tier limits.  
-- If you expect surges, add throttling, rate limits, or a “kill switch” Lambda to disable your stack.  
-- Pin Serverless in `devDependencies` (e.g., `"serverless": "^3.34"`) and run `npx serverless deploy` so everyone uses the same CLI.
